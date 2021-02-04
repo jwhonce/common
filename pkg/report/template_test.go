@@ -137,3 +137,17 @@ func TestTemplate_ReplaceFuncs(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "ident\n", buf.String())
 }
+
+func TestTemplate_json(t *testing.T) {
+	tmpl := NewTemplate("TestTemplate")
+	// yes, we're overriding upper with lower :-)
+	tmpl, e := tmpl.Parse(`{{json .ID}}`)
+	assert.NoError(t, e)
+
+	var buf bytes.Buffer
+	err := tmpl.Execute(&buf, map[string][]string{
+		"ID": {"ident1", "ident2", "ident3"},
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, `["ident1","ident2","ident3"]`+"\n", buf.String())
+}
