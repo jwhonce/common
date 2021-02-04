@@ -21,17 +21,15 @@ type FuncMap template.FuncMap
 var tableReplacer = strings.NewReplacer(
 	"table ", "",
 	`\t`, "\t",
-	`\n`, "\n",
 	" ", "\t",
 )
 
 // escapedReplacer will clean up escaped characters from CLI
 var escapedReplacer = strings.NewReplacer(
 	`\t`, "\t",
-	`\n`, "\n",
 )
 
-var defaultFuncs = FuncMap{
+var DefaultFuncs = FuncMap{
 	"join":  strings.Join,
 	"lower": strings.ToLower,
 	"split": strings.Split,
@@ -96,7 +94,7 @@ func Headers(object interface{}, overrides map[string]string) []map[string]strin
 
 // NewTemplate creates a new template object
 func NewTemplate(name string) *Template {
-	return &Template{Template: template.New(name).Funcs(template.FuncMap(defaultFuncs))}
+	return &Template{Template: template.New(name).Funcs(template.FuncMap(DefaultFuncs))}
 }
 
 // Parse parses text as a template body for t
@@ -108,7 +106,7 @@ func (t *Template) Parse(text string) (*Template, error) {
 		text = NormalizeFormat(text)
 	}
 
-	tt, err := t.Template.Funcs(template.FuncMap(defaultFuncs)).Parse(text)
+	tt, err := t.Template.Funcs(template.FuncMap(DefaultFuncs)).Parse(text)
 	return &Template{tt, t.isTable}, err
 }
 
@@ -116,7 +114,7 @@ func (t *Template) Parse(text string) (*Template, error) {
 // A default template function will be replace if there is a key collision.
 func (t *Template) Funcs(funcMap FuncMap) *Template {
 	m := make(FuncMap)
-	for k, v := range defaultFuncs {
+	for k, v := range DefaultFuncs {
 		m[k] = v
 	}
 	for k, v := range funcMap {
