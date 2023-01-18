@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"unicode"
 
 	"github.com/containers/storage/types"
 )
@@ -16,12 +17,12 @@ func GetRootlessRuntimeDir(rootlessUID int) (string, error) {
 	return types.GetRootlessRuntimeDir(rootlessUID)
 }
 
-// DefaultStoreOptionsAutoDetectUID returns the default storage ops for containers
+// DefaultStoreOptionsAutoDetectUID returns the default storage options for containers
 func DefaultStoreOptionsAutoDetectUID() (types.StoreOptions, error) {
 	return types.DefaultStoreOptionsAutoDetectUID()
 }
 
-// DefaultStoreOptions returns the default storage ops for containers
+// DefaultStoreOptions returns the default storage options for containers
 func DefaultStoreOptions(rootless bool, rootlessUID int) (types.StoreOptions, error) {
 	return types.DefaultStoreOptions(rootless, rootlessUID)
 }
@@ -42,13 +43,14 @@ func validateMountOptions(mountOptions []string) error {
 }
 
 func applyNameOperation(oldNames []string, opParameters []string, op updateNameOperation) ([]string, error) {
-	result := make([]string, 0)
+	var result []string
 	switch op {
 	case setNames:
 		// ignore all old names and just return new names
-		return dedupeNames(opParameters), nil
+		result = opParameters
 	case removeNames:
 		// remove given names from old names
+		result = make([]string, 0, len(oldNames))
 		for _, name := range oldNames {
 			// only keep names in final result which do not intersect with input names
 			// basically `result = oldNames - opParameters`
@@ -62,13 +64,24 @@ func applyNameOperation(oldNames []string, opParameters []string, op updateNameO
 				result = append(result, name)
 			}
 		}
-		return dedupeNames(result), nil
 	case addNames:
+		result = make([]string, 0, len(opParameters)+len(oldNames))
 		result = append(result, opParameters...)
 		result = append(result, oldNames...)
-		return dedupeNames(result), nil
 	default:
 		return result, errInvalidUpdateNameOperation
 	}
 	return dedupeNames(result), nil
+}
+
+func nameLooksLikeID(name string) bool {
+	if len(name) != 64 {
+		return false
+	}
+	for _, c := range name {
+		if !unicode.Is(unicode.ASCII_Hex_Digit, c) {
+			return false
+		}
+	}
+	return true
 }
